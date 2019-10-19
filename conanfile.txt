@@ -1,0 +1,14 @@
+[requires]
+bzip2/1.0.8@conan/stable
+qt/5.12.5@bincrafters/stable
+portaudio/v190600.20161030@bincrafters/stable
+opus/1.2.1@bincrafters/stable
+boost/1.71.0@conan/stable
+sqlite3/3.28.0@bincrafters/stable
+
+[generators]
+cmake
+
+[imports]
+bin, *.dll -> ./bin # Copies all dll files from packages bin folder to my local "bin" folder
+lib, *.dylib* -> ./bin # Copies all dylib files from packages lib folder to my local "bin" folder

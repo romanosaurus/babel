@@ -1,0 +1,670 @@
+B12Powered Inc.
+Request for Comments: 42069
+BCP: 123                                                                                                  September 2019
+Category: Babel documentation
+
+
+
+                                                BABEL PROTOCOL
+
+
+
+Status of this Memo
+
+        This document specifies how to use the protocol implemented in our Babel for the next developers.
+        Distribution of this memo is unlimited.
+
+
+Table of Contents
+
+        1. Introduction............................1
+        2. VoIP Model..............................1
+                2.1 How VoIP Works.................1
+                2.2 Advantages Of VoIP.............1
+        3. The BABEL Protocol......................2
+                3.1 Client/Server Protocol.........2
+                        3.1.1 OpCode 100...........2
+                        3.1.2 OpCode 200...........2
+                        3.1.3 OpCode 300...........4
+                3.2 Client/Server Request Flow.....5
+                        3.2.1 Contact Flow.........5
+                        3.2.2 Call Flow............5
+                        3.2.3 Messages Flow........5
+                        3.2.4 Register Flow........5
+                3.3 Client/Client Protocol.........6
+                        3.3.1 Audio Packet.........6
+
+
+1 - Introduction
+
+        The BABEL consists in a client/server architecture voice over IP application, similar to Skype 
+        or TeamSpeak. Here is the RFC of the protocol we have created to make this project.
+
+
+2 - VoIP Model
+
+                        +---------------+                               +---------------+
+                        |               |                               |               |
+                        | /-----------\ |                               | /-----------\ |
+                        | |  USER 1   | |                               | |  USER 2   | |
+                        | \-----------/ |             Internet          | \-----------/ |
+                        |               <------------------------------->               |
+                        |               |        Voice transmission     |               |
+                        |               |         through network       |               |
+                        |               |                               |               |
+                        |               |                               |               |
+                        +---------------+                               +---------------+
+
+
+        VoIP is short for Voice over Internet Protocol, it is a category of hardware and software that
+        enables people to use the Internet as the transmission medium for telephone calls by sending
+        voice data in packets using IP rather than by traditional circuit transmissions.
+
+        Popular software like Skype or Discord use VoIP transmission.
+
+
+2.1 How VoIP Works
+
+        Voice over Internet Protocol is the technology that converts your voice into a digital signal,
+        allowing you to make a call directly from a computer, a VoIP phone, or other data-driven devices.
+
+
+2.2 Advantages Of VoIP
+
+        VoIP uses packets, so much more information can be carried over the network to support and enhance
+        your communications.
+        VoIP gives you access to advanced applications, which can help your team to be more productive and
+        efficient.        
+
+
+B12Powered INC                                       BABEL PROTOCOL                                             [Page 1]
+
+
+3 - The BABEL Protocol
+
+        For the BABEL project we had to implement a binary protocol, that permits the user to communicate with
+        the server and other users.
+        Client/Server protocol will use a TCP based packet and on the other hand, the Client/Client protocol
+        will use a UDP based packet.
+
+
+3.1 - Client/Server Protocol
+
+        Operation codes are on 2 bytes.
+
+        The codes have a meaning.
+        The first digit represent the source of the information:
+                1__ - used by server and client
+                2__ - used from client to server
+                3__ - used from server to client
+        The second digit represent the type of information:
+                _0_ - used when the information is about the contact list
+                _1_ - used when the information is about a call
+                _2_ - used when the information is about a text message
+                _4_ - used when the information is about authentication
+        The third digit identify the exact information and is specific to a message.
+
+3.1.1 - OpCode 100
+
+        * 100 <response> <description_length> - binary packet (used by the server and the client
+
+                * response : 1 (yes) / 0 (no) : 1 byte
+
+                * description_length : the length of the description (0 if no description) : 8 bytes
+
+                * description : a message describing the boolean response : description_length bytes
+
+        +------------+------------+------------+------------+------------+------------+
+        |           100           |  response  |          description_length
+        +------------+------------+------------+------------+------------+------------+
+                     |       description    ...|
+        +------------+------------+------------+
+
+3.1.2 - OpCode 200
+
+        * 200 <target_user_id> - add an user into the contact list 
+
+                * target_user_id : id of the user added : 8 bytes
+
+        +------------+------------+------------+------------+------------+------------+
+        |           200           |                 target_user_id                    |
+        +------------+------------+------------+------------+------------+------------+
+
+        * 201 <target_user_id> - delete an user into the contact list
+
+                * target_user_id : id of the user to be deleted : 8 bytes
+
+        +------------+------------+------------+------------+------------+------------+
+        |           201           |                 target_user_id                    |
+        +------------+------------+------------+------------+------------+------------+
+
+        * 202 - list all the user in your contact list
+
+        +------------+------------+
+        |           202           |
+        +------------+------------+
+
+        * 203 <target_user_id> <answer> - accept/deny a contact request
+
+                * target_user_id : id of the user added : 8 bytes
+
+                * answer : 1 (yes) / 0 (no) : 1 byte
+
+        +------------+------------+------------+------------+------------+------------+
+        |           203           |                 target_user_id                    |
+        +------------+------------+------------+------------+------------+------------+
+        |   answer   |
+        +------------+
+
+        * 204 <target_user_id> - list a contact information
+
+                * target_user_id : id of the user to be checked : 8 bytes
+
+        +------------+------------+------------+------------+------------+------------+
+        |           204           |                 target_user_id                    |
+        +------------+------------+------------+------------+------------+------------+
+
+        * 205 - get own contact requests
+
+        +------------+------------+
+        |           205           |
+        +------------+------------+
+
+        * 210 <target_user_id> - start a call with a user
+
+                * target_user_id : id of the user called : 8 bytes
+
+        +------------+------------+------------+------------+------------+------------+
+        |           210           |                 target_user_id                    |
+        +------------+------------+------------+------------+------------+------------+
+
+        * 211 <target_user_id> - hang up a call
+
+                * target_user_id : id of the user to hang up with : 8 bytes
+
+        +------------+------------+------------+------------+------------+------------+
+        |           211           |                 target_user_id                    |
+        +------------+------------+------------+------------+------------+------------+
+
+        * 212 <target_user_id> <answer> - accept/deny a call
+
+                * target_user_id : id of the user called : 8 bytes
+
+                * answer : 1 (yes) / 0 (no) : 1 byte
+
+        +------------+------------+------------+------------+------------+------------+
+        |           212           |                 target_user_id                    |
+        +------------+------------+------------+------------+------------+------------+
+        |   answer   |
+        +------------+
+
+
+B12Powered INC                                       BABEL PROTOCOL                                             [Page 2]
+
+
+        * 220 <target_user_id> <message_size> <message> - send a message to a user
+                
+                * target_user_id : id of the user who will receives the message : 8 bytes
+
+                * message_size : size of the message parameter in bytes : 8 bytes
+
+                * message : message to send : message_size bytes
+        
+        +------------+------------+------------+------------+------------+------------+
+        |           220           |                 target_user_id                    |
+        +------------+------------+------------+------------+------------+------------+
+        |                   message_size                    |         message       ...
+        +------------+------------+------------+------------+------------+------------+
+        ...                                 message                                   |
+        +------------+------------+------------+------------+------------+------------+
+
+        * 221 <contact_user_id> <start_time_stamp> <end_time_stamp> - receive a list of message with a user in interval
+
+                * contact_user_id : id of the user you want to get message with : 8 bytes
+
+                * start_time_stamp : start of the time stamp interval : 8 bytes
+
+                * end_time_stamp : end of the time stamp interval : 8 bytes
+
+        +------------+------------+------------+------------+------------+------------+
+        |           221           |                 contact_user_id                   |
+        +------------+------------+------------+------------+------------+------------+
+        |                 start_time_stamp                  |      end_time_stamp
+        +------------+------------+------------+------------+------------+------------+
+              end_time_stamp      |
+        +------------+------------+
+
+        * 240 <username> <birth_date> <email_length> <password_length> <email> <password> - register a new user
+
+                * username : username of the user (max 10 chars) : 10 bytes
+
+                * birth_date : birth date of the user : 8 bytes
+
+                * email_length : length of the upcoming email address in bytes : 8 bytes
+
+                * password_length : length of the upcoming password : 8 bytes
+
+                * email : email of the user : email_length bytes
+
+                * password : password to use for this user : password_length bytes
+
+        +------------+------------+------------+------------+------------+------------+
+        |           240           |                     username
+        +------------+------------+------------+------------+------------+------------+
+                                     username                            | birth_date
+        +------------+------------+------------+------------+------------+------------+
+                       birth_date              |             email_length
+        +------------+------------+------------+------------+------------+------------+
+        email_length |                 password_length                   |   email ...|
+        +------------+------------+------------+------------+------------+------------+
+        |        password      ...|
+        +------------+------------+
+
+        * 241 <username> <password_length> <password> - login a user
+
+                * username : username of the user : 10 bytes
+
+                * password_length : length of the upcoming password : 8 bytes
+
+                * password : password to use for this user : password_length bytes
+
+        +------------+------------+------------+------------+------------+------------+
+        |           241           |                      username
+        +------------+------------+------------+------------+------------+------------+
+                                            username                                  |
+        +------------+------------+------------+------------+------------+------------+
+                           password_length                  |        password       ...
+        +------------+------------+------------+------------+------------+------------+
+        ...                                password                                   |
+        +------------+------------+------------+------------+------------+------------+
+
+        * 242 <user_id> <username> <birth_date> <email_length> <password_length> <email> <password> - update a user
+
+                * user_id : id of the user to update : 8 bytes
+
+                * username : username of the user (max 10 chars) : 10 bytes
+
+                * birth_date : birth date of the user : 8 bytes
+
+                * email_length : length of the upcoming email address in bytes : 8 bytes
+
+                * password_length : length of the upcoming password : 8 bytes
+
+                * email : email of the user : email_length bytes
+
+                * password : password to use for this user : password_length bytes
+
+        +------------+------------+------------+------------+------------+------------+
+        |           242           |                      user_id                      |
+        +------------+------------+------------+------------+------------+------------+
+        |                                   username
+        +------------+------------+------------+------------+------------+------------+
+                               username                     |       birth_date
+        +------------+------------+------------+------------+------------+------------+
+                 birth_date       |                    email_length                   |
+        +------------+------------+------------+------------+------------+------------+
+        |                 password_length                   |          email       ...|
+        +------------+------------+------------+------------+------------+------------+
+        |        password      ...|
+        +------------+------------+
+
+
+B12Powered INC                                       BABEL PROTOCOL                                             [Page 3]
+
+
+3.1.3 - OpCode 300
+
+        * 300 <contact_user_id> - receive a contact add request from server
+        
+                * contact_user_id : id of the user who send the contact request : 8 bytes
+
+        +------------+------------+------------+------------+------------+------------+
+        |           300           |                 contact_user_id                   |
+        +------------+------------+------------+------------+------------+------------+
+
+        * 301 <contact_target_id> <answer> - receive answer of a contact request
+
+                * contact_user_id : id of the user who has been called : 8 bytes
+
+                * answer : 1 (yes) / 0 (no) : 1 byte
+        
+        +------------+------------+------------+------------+------------+------------+
+        |           301           |                 contact_user_id                   |
+        +------------+------------+------------+------------+------------+------------+
+        |   answer   |
+        +------------+
+
+        * 302 <contact_user_id> - was deleted from a contact list
+
+                * contact_user_id : id of the user who deleted the contact : 8 bytes
+
+        +------------+------------+------------+------------+------------+------------+
+        |           302           |                 contact_user_id                   |
+        +------------+------------+------------+------------+------------+------------+
+
+        * 303 <nb_contacts> <contact_user_ids> - received a contact list
+
+                * nb_contacts : number of contact ids that are after this : 8 bytes
+
+                * contact_user_ids : list of ids of contacts composed of <contact_id> : nb_contacts * 8 bytes
+                        * contact_id : id of a contact : 8 bytes
+
+        +------------+------------+------------+------------+------------+------------+
+        |           303           |                    nb_contacts                    |
+        +------------+------------+------------+------------+------------+------------+
+        |                     contact_id 1                  |      contact_id 2     ...
+        +------------+------------+------------+------------+------------+------------+
+        ...                       |        contact_id nb_contacts                     |
+        +------------+------------+------------+------------+------------+------------+
+
+        * 304 <user_id> <email_length> <username> <birth_date> <email> - get a user informations
+
+                * user_id : the user id of this profile
+
+                * email_length : length of the upcoming email address in bytes : 8 bytes
+
+                * username : username of the user (max 10 chars) : 10 bytes
+
+                * birth_date : birth date of the user : 8 bytes
+
+                * email : email of the user : email_length bytes
+
+        +------------+------------+------------+------------+------------+------------+
+        |           304           |                      user_id                      |
+        +------------+------------+------------+------------+------------+------------+
+        |                   email_length                    |        username
+        +------------+------------+------------+------------+------------+------------+
+                                             username
+        +------------+------------+------------+------------+------------+------------+
+                  username        |                    birth_date                     |
+        +------------+------------+------------+------------+------------+------------+
+                                email                    ...|
+        +------------+------------+------------+------------+
+
+        * 305 <nb_contacts> <contact_user_ids> - received a contact request list
+
+                * nb_contacts : number of contact ids that are after this : 8 bytes
+
+                * contact_user_ids : list of ids of contacts composed of <contact_id> : nb_contacts * 8 bytes
+                        * contact_id : id of a contact : 8 bytes
+
+        +------------+------------+------------+------------+------------+------------+
+        |           303           |                    nb_contacts                    |
+        +------------+------------+------------+------------+------------+------------+
+        |                     contact_id 1                  |      contact_id 2     ...
+        +------------+------------+------------+------------+------------+------------+
+        ...                       |        contact_id nb_contacts                     |
+        +------------+------------+------------+------------+------------+------------+
+
+        * 310 <caller_user_id> <caller_ip_address> <port> - receive a call from server
+
+                * caller_user_id : id of the user who called : 8 bytes
+
+                * caller_ip_address : IP address of the user who called : 4 bytes
+
+                * port : Port of the user who called : 4 bytes
+
+        +------------+------------+------------+------------+------------+------------+
+        |           310           |                 caller_user_id                    |
+        +------------+------------+------------+------------+------------+------------+
+        |                caller_ip_address                  |          port
+        +------------+------------+------------+------------+------------+------------+
+                   port           |
+        +------------+------------+
+
+        * 311 <caller_user_id> <answer> <caller_ip_address> <port> - answer of a call from server
+
+                * caller_user_id : id of the user who has been called : 8 bytes
+
+                * answer : 1 (yes) / 0 (no) : 1 byte
+
+                * caller_ip_address : IP address of the user who has been called : 4 bytes
+
+                * port : Port of the user whi has been called : 4 bytes
+
+        +------------+------------+------------+------------+------------+------------+
+        |           311           |                 caller_user_id                    |
+        +------------+------------+------------+------------+------------+------------+
+        |   answer   |                caller_ip_address                  |    port
+        +------------+------------+------------+------------+------------+------------+
+                          port                 |
+        +------------+------------+------------+
+
+        * 312 <caller_user_id> - hang up a call from server
+
+                * <caller_user_id> : id of the user in the call : 8 bytes
+        
+        +------------+------------+------------+------------+------------+------------+
+        |           312           |                 caller_user_id                    |
+        +------------+------------+------------+------------+------------+------------+
+
+        * 320 <target_user_id> <message_size> <message> - received a message from a user
+
+                * target_user_id : id of the user who sent the message : 8 bytes
+
+                * message_size : size of the message parameter in bytes : 8 bytes
+
+                * message : message to send : message_size bytes
+
+        +------------+------------+------------+------------+------------+------------+
+        |           320           |                 target_user_id                    |
+        +------------+------------+------------+------------+------------+------------+
+        |                   message_size                    |         message       ...
+        +------------+------------+------------+------------+------------+------------+
+        ...                                 message                                   |
+        +------------+------------+------------+------------+------------+------------+
+
+        * 321 <target_user_id> <nb_messages> <messages> - received a message room with a user
+
+                * target_user_id : id of the user with the messages : 8 bytes
+
+                * nb_messages : number of messages : 8 bytes
+
+                * messages : list of messages composed of <sender_id> <message_size> <message> : nb_messages * (8 + 8 + message_size) bytes
+                        * sender_id : the sender of this message : 8 bytes
+                        * message_size : the size of the next message : 8 bytes
+                        * message : a message composed of message_size characters : message_size bytes
+
+        +------------+------------+------------+------------+------------+------------+
+        |           321           |                 target_user_id                    |
+        +------------+------------+------------+------------+------------+------------+
+        |                    nb_messages                    |        messages       ...
+        +------------+------------+------------+------------+------------+------------+
+        ...                                messages                                   |
+        +------------+------------+------------+------------+------------+------------+
+
+        * 340 <user_id> - response with a user id (logged or updated)
+
+                * <user_id> : id of the user : 8 bytes
+
+        +------------+------------+------------+------------+------------+------------+
+        |           340           |                      user_id                      |
+        +------------+------------+------------+------------+------------+------------+
+
+
+B12Powered INC                                       BABEL PROTOCOL                                             [Page 4]
+
+
+3.2 - Client/Server Request Flow
+
+3.2.1 - Contact Flow
+
+        * Add A Contact Example:
+
+                        +-------------+   (1)200   +--------+   (3)300   +-------------+
+                        |             |----------->|        |----------->|             |
+                        |             |<-----------|        |<-----------|             |
+                        | USER WHO    |   (2)100   |        |   (4)203   |    USER     |
+                        | WANT T0 ADD |            | SERVER |            |    ASKED    |
+                        | THE CONTACT |            |        |            | TO BE ADDED |
+                        |             |<-----------|        |----------->|             |
+                        |             |   (6)301   |        |   (5)100   |             |
+                        +-------------+            +--------+            +-------------+
+
+        * Delete A Contact Example:
+
+                        +-------------+            +--------+            +-------------+
+                        |             |            |        |            |             |
+                        |             |   (1)201   |        |            |             |
+                        |  USER WHO   |----------->|        |----------->|    USER     |
+                        |  WANT T0    |<-----------| SERVER |   (3)302   |    ASKED    |
+                        |  DELETE     |   (2)100   |        |            |    TO BE    |
+                        | THE CONTACT |            |        |            |   DELETED   |
+                        |             |            |        |            |             |
+                        +-------------+            +--------+            +-------------+
+
+        * List A Contact List Example:
+
+                                     +-------------+            +--------+
+                                     |             |            |        |
+                                     |             |   (1)202   |        |
+                                     |  USER WHO   |----------->|        |
+                                     |  WANT TO    |<-----------| SERVER |
+                                     |  LIST THE   | (2)303/100 |        |
+                                     | CONTACT LIST|            |        |
+                                     |             |            |        |
+                                     +-------------+            +--------+
+
+        * List All Contact Requests Example:
+
+                                     +-------------+            +--------+
+                                     |             |            |        |
+                                     |  USER WHO   |   (1)205   |        |
+                                     |  WANT TO    |----------->|        |
+                                     |  LIST THE   |<-----------| SERVER |
+                                     |  CONTACT    | (2)305/100 |        |
+                                     |  REQUESTS   |            |        |
+                                     |             |            |        |
+                                     +-------------+            +--------+
+
+
+        * List A Contact Information Example:
+
+                                     +-------------+            +--------+
+                                     |             |            |        |
+                                     |             |   (1)204   |        |
+                                     |  USER WHO   |----------->|        |
+                                     |  WANT TO    |<-----------| SERVER |
+                                     |  LIST THE   | (2)304/100 |        |
+                                     | CONTACT INFO|            |        |
+                                     |             |            |        |
+                                     +-------------+            +--------+
+
+3.2.2 - Call Flow
+
+        * Call Example:
+
+                        +-------------+   (1)210   +--------+  (3)310    +-------------+
+                        |             |----------->|        |----------->|             |
+                        |             |<-----------|        |            |             |
+                        |  USER WHO   |   (2)100   |        |            |  USER WHO   |
+                        |  STARTS THE |            | SERVER |            |  RECEIVES   |
+                        |  CALL       |            |        |  (4)212    |  THE CALL   |
+                        |             |   (6)311   |        |<-----------|             |
+                        |             |<-----------|        |----------->|             |
+                        +-------------+            +--------+   (5)100   +-------------+
+
+        If in step 2 and 5 you receive a ko from server the communication stops.
+        In case of a ko in step 5 the user whi start the call will get a refuse response as if the user denied the call.
+        After that if in step 6 a yes was received both client should open udp sockets for communication.
+
+        * Hangup Example:
+
+                        +-------------+            +--------+            +-------------+
+                        |             |            |        |            |             |
+                        |             |            |        |            |             |
+                        |  USER WHO   |   (1)211   |        |   (3)312   |    OTHER    |
+                        |  HANGUP THE |----------->| SERVER |----------->|             |
+                        |  CALL       |<-----------|        |            |    USER     |
+                        |             |   (2)100   |        |            |             |
+                        |             |            |        |            |             |
+                        +-------------+            +--------+            +-------------+
+
+3.2.3 - Message Flow
+
+        * Send A Message Example:
+
+                        +-------------+            +--------+            +-------------+
+                        |             |            |        |            |             |
+                        |             |            |        |            |             |
+                        |  USER WHO   |   (1)220   |        |   (3)320   |    OTHER    |
+                        |  SEND THE   |----------->| SERVER |----------->|             |
+                        |  MESSAGE    |<-----------|        |            |    USER     |
+                        |             |   (2)100   |        |            |             |
+                        |             |            |        |            |             |
+                        +-------------+            +--------+            +-------------+
+
+        * Get A Conversation With A User Example:
+
+                                     +-------------+            +--------+
+                                     |             |            |        |
+                                     |             |   (1)221   |        |
+                                     |  USER WHO   |----------->|        |
+                                     |  WANT TO    |<-----------| SERVER |
+                                     |  GET THE    | (2)321/100 |        |
+                                     | CONVERSATION|            |        |
+                                     |             |            |        |
+                                     +-------------+            +--------+
+3.2.3 - Registration Flow
+
+        * Registration Example:
+
+                                     +-------------+            +--------+
+                                     |             |            |        |
+                                     |             |   (1)240   |        |
+                                     |  USER WHO   |----------->|        |
+                                     |  WANT TO    |<-----------| SERVER |
+                                     |  REGISTER   |   (2)100   |        |
+                                     |             |            |        |
+                                     |             |            |        |
+                                     +-------------+            +--------+
+
+        * Login Example:
+
+                                     +-------------+            +--------+
+                                     |             |            |        |
+                                     |             |   (1)241   |        |
+                                     |  USER WHO   |----------->|        |
+                                     |  WANT TO    |<-----------| SERVER |
+                                     |  LOGIN      | (2)340/100 |        |
+                                     |             |            |        |
+                                     |             |            |        |
+                                     +-------------+            +--------+
+
+        * Update A User Data Example:
+
+                                     +-------------+            +--------+
+                                     |             |            |        |
+                                     |             |   (1)242   |        |
+                                     |  USER WHO   |----------->|        |
+                                     |  WANT TO    |<-----------| SERVER |
+                                     |  UPDATE     | (2)340/100 |        |
+                                     |             |            |        |
+                                     |             |            |        |
+                                     +-------------+            +--------+
+
+
+B12Powered INC                                       BABEL PROTOCOL                                             [Page 5]
+
+3.3 - Client/Client Protocol
+
+        In the client/client protocol (udp) there is only one type of packet corresponding to audio data.
+
+3.3.1 - Audio Packet
+
+                * user_id : the id of the user this packet is coming from : 8 bytes
+
+                * timestamp : a timestamp used to discard late packets : 8 bytes
+
+                * audio_data_size : the size of the coming audio data : 8 bytes
+
+                * audio_data : the data of opus audio : audio_data_size bytes
+
+        +------------+------------+------------+------------+------------+------------+------------+------------+
+        |                      user_id                      |                     timestamp                     |
+        +------------+------------+------------+------------+------------+------------+------------+------------+
+        |                 audio_data_size                   |                     audio_data                 ...|
+        +------------+------------+------------+------------+------------+------------+------------+------------+
+
+
+B12Powered INC                                       BABEL PROTOCOL                                             [Page 6]

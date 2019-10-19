@@ -1,0 +1,43 @@
+/*
+** EPITECH PROJECT, 2019
+** Babel
+** File description:
+** BabelException.hpp
+*/
+
+/* Created the 17/09/2019 at 18:17 by julian.frabel@epitech.eu */
+
+#ifndef BABEL_BABELEXCEPTION_HPP
+#define BABEL_BABELEXCEPTION_HPP
+
+#include "b12software/exception/B12SoftwareException.hpp"
+
+/*!
+ * @namespace b12software
+ * @brief Main namespace for all b12 software
+ */
+namespace b12software {
+
+    /*!
+     * @namespace b12software::babel
+     * @brief Main namespace for the babel project
+     */
+    namespace babel {
+
+        /*!
+         * @class BabelException
+         * @brief The root of all exceptions for the babel project
+         */
+        class BabelException : public exception::B12SoftwareException {
+        public:
+            /*!
+             * @brief ctor
+             * @param what A message describing the error
+             * @param where A message describing the location
+             */
+            BabelException(const std::string &what, const std::string &where): B12SoftwareException(what, where) {};
+        };
+    }
+}
+
+#endif //BABEL_BABELEXCEPTION_HPP
