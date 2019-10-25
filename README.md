@@ -1,3 +1,22 @@
+# Informations
+The babel is an Epitech project who's goal is to create a VoIP protocol and implement it in c++ using the following libraries:
+* Qt (client side)
+* Boost(server/client side)
+* BoostAsio(server side)
+* PortAudio(client side)
+* Opus(client side)
+
+The project should be cross platform (windows/linux) and consists of a server and a client. The server connects clients between them and handle messages/commands, but the voice communication should be done in p2p using udp between two clients.
+
+# Authors
+[Julian Frabel](https://github.com/Eldriann)
+
+[Charlie Jeanneau](https://github.com/JeSuisCharlie1)
+
+[Brian Guitteny](https://github.com/briangtn)
+
+[Romain Fouyer](https://github.com/romanosaurus)
+
 # How to install
 
 ## Before install:
@@ -38,10 +57,5 @@ If you want to change the config to debug simply use Debug instead of Release.
 ## Linux:
 Simply go to the folder setup and run setup_unix.sh (or run all the commands from setup_unix.sh manually)
 
-# Information:
-Please document each part of your code.
-
-All of the babel work should be done in the b12software::babel namespace.
-
 # Documentation:
-You can access the babel protocol RFC and the doxygen documentation in the docs folder or [here](babel.b12powered.com).
+You can access the babel protocol RFC and the doxygen documentation in the docs folder or [here](https://babel.b12powered.com).
